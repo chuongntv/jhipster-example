@@ -1,0 +1,57 @@
+<div>
+    <h2>Citys</h2>
+    <jh-alert></jh-alert>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <button class="btn btn-primary" ui-sref="city.new">
+                    <span class="glyphicon glyphicon-flash"></span> <span>Create a new City</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr jh-sort="predicate" ascending="reverse" callback="loadAll()">
+                    <th jh-sort-by="id"><span>ID</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="name"><span>Name</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="code"><span>Code</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="country.id"><span>country</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="city in citys track by city.id">
+                    <td><a ui-sref="city.detail({id:city.id})">{{city.id}}</a></td>
+                    <td>{{city.name}}</td>
+                    <td>{{city.code}}</td>
+                    <td>
+                        <a ui-sref="country.detail({id:city.country.id})">{{city.country.id}}</a>
+                    </td>
+                    <td>
+                        <button type="submit"
+                                ui-sref="city.detail({id:city.id})"
+                                class="btn btn-info btn-sm">
+                            <span class="glyphicon glyphicon-eye-open"></span>&nbsp;<span> View</span>
+                        </button>
+                        <button type="submit"
+                                ui-sref="city.edit({id:city.id})"
+                                class="btn btn-primary btn-sm">
+                            <span class="glyphicon glyphicon-pencil"></span>&nbsp;<span> Edit</span>
+                        </button>
+                        <button type="submit"
+                                ui-sref="city.delete({id:city.id})"
+                                class="btn btn-danger btn-sm">
+                            <span class="glyphicon glyphicon-remove-circle"></span>&nbsp;<span> Delete</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="text-center">
+        <uib-pagination class="pagination-sm" total-items="totalItems" ng-model="page" ng-change="loadAll()"></uib-pagination>
+    </div>
+</div>
