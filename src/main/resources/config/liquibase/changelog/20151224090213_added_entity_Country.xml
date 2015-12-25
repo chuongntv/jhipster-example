@@ -17,7 +17,7 @@
         Added the entity Country.
     -->
     <changeSet id="20151224090213" author="jhipster">
-        <createTable tableName="country">
+        <createTable tableName="countries">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -28,6 +28,6 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        
+
     </changeSet>
 </databaseChangeLog>

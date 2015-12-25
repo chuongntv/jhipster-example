@@ -17,7 +17,7 @@
         Added the entity City.
     -->
     <changeSet id="20151224090422" author="jhipster">
-        <createTable tableName="city">
+        <createTable tableName="cities">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -29,12 +29,12 @@
             </column>
             <column name="country_id" type="bigint"/>
         </createTable>
-        
+
         <addForeignKeyConstraint baseColumnNames="country_id"
-                                 baseTableName="city"
+                                 baseTableName="cities"
                                  constraintName="fk_city_country_id"
                                  referencedColumnNames="id"
-                                 referencedTableName="country"/>
+                                 referencedTableName="countries"/>
 
     </changeSet>
 </databaseChangeLog>

@@ -29,12 +29,12 @@
             </column>
             <column name="city_id" type="bigint"/>
         </createTable>
-        
+
         <addForeignKeyConstraint baseColumnNames="city_id"
                                  baseTableName="district"
                                  constraintName="fk_district_city_id"
                                  referencedColumnNames="id"
-                                 referencedTableName="city"/>
+                                 referencedTableName="cities"/>
 
     </changeSet>
 </databaseChangeLog>

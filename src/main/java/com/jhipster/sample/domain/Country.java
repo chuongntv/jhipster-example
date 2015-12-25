@@ -14,7 +14,7 @@ import java.util.Objects;
  * A Country.
  */
 @Entity
-@Table(name = "country")
+@Table(name = "countries")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Country implements Serializable {
 
