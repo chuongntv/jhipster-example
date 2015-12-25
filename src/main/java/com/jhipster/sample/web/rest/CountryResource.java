@@ -30,14 +30,14 @@ import java.util.Optional;
 public class CountryResource {
 
     private final Logger log = LoggerFactory.getLogger(CountryResource.class);
-        
+
     @Inject
     private CountryRepository countryRepository;
-    
+
     /**
-     * POST  /countrys -> Create a new country.
+     * POST  /countries -> Create a new country.
      */
-    @RequestMapping(value = "/countrys",
+    @RequestMapping(value = "/countries",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -47,7 +47,7 @@ public class CountryResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("country", "idexists", "A new country cannot already have an ID")).body(null);
         }
         Country result = countryRepository.save(country);
-        return ResponseEntity.created(new URI("/api/countrys/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/countries/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("country", result.getId().toString()))
             .body(result);
     }
@@ -55,7 +55,7 @@ public class CountryResource {
     /**
      * PUT  /countrys -> Updates an existing country.
      */
-    @RequestMapping(value = "/countrys",
+    @RequestMapping(value = "/countries",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -71,24 +71,24 @@ public class CountryResource {
     }
 
     /**
-     * GET  /countrys -> get all the countrys.
+     * GET  /countries -> get all the countries.
      */
-    @RequestMapping(value = "/countrys",
+    @RequestMapping(value = "/countries",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     public ResponseEntity<List<Country>> getAllCountrys(Pageable pageable)
         throws URISyntaxException {
-        log.debug("REST request to get a page of Countrys");
-        Page<Country> page = countryRepository.findAll(pageable); 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/countrys");
+        log.debug("REST request to get a page of Countries");
+        Page<Country> page = countryRepository.findAll(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/countries");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET  /countrys/:id -> get the "id" country.
+     * GET  /countries/:id -> get the "id" country.
      */
-    @RequestMapping(value = "/countrys/{id}",
+    @RequestMapping(value = "/countries/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -103,9 +103,9 @@ public class CountryResource {
     }
 
     /**
-     * DELETE  /countrys/:id -> delete the "id" country.
+     * DELETE  /countries/:id -> delete the "id" country.
      */
-    @RequestMapping(value = "/countrys/{id}",
+    @RequestMapping(value = "/countries/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed

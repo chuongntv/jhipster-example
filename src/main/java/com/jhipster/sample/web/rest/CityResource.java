@@ -30,14 +30,14 @@ import java.util.Optional;
 public class CityResource {
 
     private final Logger log = LoggerFactory.getLogger(CityResource.class);
-        
+
     @Inject
     private CityRepository cityRepository;
-    
+
     /**
      * POST  /citys -> Create a new city.
      */
-    @RequestMapping(value = "/citys",
+    @RequestMapping(value = "/cities",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -47,7 +47,7 @@ public class CityResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("city", "idexists", "A new city cannot already have an ID")).body(null);
         }
         City result = cityRepository.save(city);
-        return ResponseEntity.created(new URI("/api/citys/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/cities/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("city", result.getId().toString()))
             .body(result);
     }
@@ -55,7 +55,7 @@ public class CityResource {
     /**
      * PUT  /citys -> Updates an existing city.
      */
-    @RequestMapping(value = "/citys",
+    @RequestMapping(value = "/cities",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -73,22 +73,22 @@ public class CityResource {
     /**
      * GET  /citys -> get all the citys.
      */
-    @RequestMapping(value = "/citys",
+    @RequestMapping(value = "/cities",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     public ResponseEntity<List<City>> getAllCitys(Pageable pageable)
         throws URISyntaxException {
-        log.debug("REST request to get a page of Citys");
-        Page<City> page = cityRepository.findAll(pageable); 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/citys");
+        log.debug("REST request to get a page of Cities");
+        Page<City> page = cityRepository.findAll(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/cities");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
      * GET  /citys/:id -> get the "id" city.
      */
-    @RequestMapping(value = "/citys/{id}",
+    @RequestMapping(value = "/cities/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -103,9 +103,9 @@ public class CityResource {
     }
 
     /**
-     * DELETE  /citys/:id -> delete the "id" city.
+     * DELETE  /cities/:id -> delete the "id" city.
      */
-    @RequestMapping(value = "/citys/{id}",
+    @RequestMapping(value = "/cities/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
