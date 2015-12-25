@@ -197,6 +197,36 @@ public class CountryResourceIntTest {
 
     @Test
     @Transactional
+    public void updateCountryWithNullName() throws Exception {
+        // Initialize the database
+        countryRepository.saveAndFlush(country);
+
+        // Update the country
+        country.setName(null);
+
+        restCountryMockMvc.perform(put("/api/countrys")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(country)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Transactional
+    public void updateCountryWithNullCode() throws Exception {
+        // Initialize the database
+        countryRepository.saveAndFlush(country);
+
+        // Update the country
+        country.setCode(null);
+
+        restCountryMockMvc.perform(put("/api/countrys")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(country)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Transactional
     public void deleteCountry() throws Exception {
         // Initialize the database
         countryRepository.saveAndFlush(country);
@@ -211,5 +241,17 @@ public class CountryResourceIntTest {
         // Validate the database is empty
         List<Country> countrys = countryRepository.findAll();
         assertThat(countrys).hasSize(databaseSizeBeforeDelete - 1);
+    }
+
+    @Test
+    @Transactional
+    public void deleteCountryWithInvalidId() throws Exception {
+        // Initialize the database
+        countryRepository.saveAndFlush(country);
+
+        // Get the country
+        restCountryMockMvc.perform(delete("/api/countrys/{id}", -1)
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest());
     }
 }
