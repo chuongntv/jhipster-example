@@ -6,6 +6,7 @@ import com.jhipster.sample.domain.Country;
 import com.jhipster.sample.repository.CityRepository;
 
 import com.jhipster.sample.repository.CountryRepository;
+import io.gatling.recorder.util.Json;
 import org.boon.Str;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasToString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -99,7 +101,7 @@ public class CityResourceIntTest {
 
         // Create the City
 
-        restCityMockMvc.perform(post("/api/citys")
+        restCityMockMvc.perform(post("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isCreated());
@@ -122,7 +124,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/citys")
+        restCityMockMvc.perform(post("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -140,7 +142,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/citys")
+        restCityMockMvc.perform(post("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -158,7 +160,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/citys")
+        restCityMockMvc.perform(post("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -174,13 +176,15 @@ public class CityResourceIntTest {
         cityRepository.saveAndFlush(city);
 
         // Get all the citys
-        restCityMockMvc.perform(get("/api/citys?sort=id,desc"))
+        restCityMockMvc.perform(get("/api/cities?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.[*].id").value(hasItem(city.getId().intValue())))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
             .andExpect(jsonPath("$.[*].code").value(hasItem(DEFAULT_CODE.toString())))
-            .andExpect(jsonPath("$.[*].country").value(hasItem(TestUtil.convertObjectToJsonBytes(country))));
+            .andExpect(jsonPath("$.[*].country.id").value(hasItem(country.getId().intValue())))
+            .andExpect(jsonPath("$.[*].country.name").value(hasItem(COUNTRY_NAME)))
+            .andExpect(jsonPath("$.[*].country.code").value(hasItem(COUNTRY_CODE)));
     }
 
     @Test
@@ -190,20 +194,22 @@ public class CityResourceIntTest {
         cityRepository.saveAndFlush(city);
 
         // Get the city
-        restCityMockMvc.perform(get("/api/citys/{id}", city.getId()))
+        restCityMockMvc.perform(get("/api/cities/{id}", city.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(city.getId().intValue()))
-            .andExpect(jsonPath("$.name").value(DEFAULT_NAME.toString()))
-            .andExpect(jsonPath("$.code").value(DEFAULT_CODE.toString()))
-            .andExpect(jsonPath("$.[*].country").value(hasItem(TestUtil.convertObjectToJsonBytes(country))));
+            .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
+            .andExpect(jsonPath("$.code").value(DEFAULT_CODE))
+            .andExpect(jsonPath("$.country.id").value(country.getId().intValue()))
+            .andExpect(jsonPath("$.country.name").value(COUNTRY_NAME))
+            .andExpect(jsonPath("$.country.code").value(COUNTRY_CODE));
     }
 
     @Test
     @Transactional
     public void getNonExistingCity() throws Exception {
         // Get the city
-        restCityMockMvc.perform(get("/api/citys/{id}", Long.MAX_VALUE))
+        restCityMockMvc.perform(get("/api/cities/{id}", Long.MAX_VALUE))
             .andExpect(status().isNotFound());
     }
 
@@ -226,7 +232,7 @@ public class CityResourceIntTest {
         city.setCode(UPDATED_CODE);
         city.setCountry(country1);
 
-        restCityMockMvc.perform(put("/api/citys")
+        restCityMockMvc.perform(put("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isOk());
@@ -253,7 +259,7 @@ public class CityResourceIntTest {
         city.setCode(UPDATED_CODE);
         city.setCountry(null);
 
-        restCityMockMvc.perform(put("/api/citys")
+        restCityMockMvc.perform(put("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -268,7 +274,7 @@ public class CityResourceIntTest {
         // Update the city
         city.setName(null);
 
-        restCityMockMvc.perform(put("/api/citys")
+        restCityMockMvc.perform(put("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -283,7 +289,7 @@ public class CityResourceIntTest {
         // Update the city
         city.setCode(null);
 
-        restCityMockMvc.perform(put("/api/citys")
+        restCityMockMvc.perform(put("/api/cities")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -298,7 +304,7 @@ public class CityResourceIntTest {
         int databaseSizeBeforeDelete = cityRepository.findAll().size();
 
         // Get the city
-        restCityMockMvc.perform(delete("/api/citys/{id}", city.getId())
+        restCityMockMvc.perform(delete("/api/cities/{id}", city.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isOk());
 
@@ -314,7 +320,7 @@ public class CityResourceIntTest {
         cityRepository.saveAndFlush(city);
 
         // Get the city
-        restCityMockMvc.perform(delete("/api/citys/{id}", -1)
+        restCityMockMvc.perform(delete("/api/cities/{id}", -1)
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isBadRequest());
     }
