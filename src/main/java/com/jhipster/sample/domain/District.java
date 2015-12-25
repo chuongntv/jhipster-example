@@ -16,7 +16,7 @@ import java.util.Objects;
  * A District.
  */
 @Entity
-@Table(name = "districts")
+@Table(name = "district")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class District implements Serializable {
 
