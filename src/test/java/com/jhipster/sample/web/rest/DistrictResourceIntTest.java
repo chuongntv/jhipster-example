@@ -131,6 +131,22 @@ public class DistrictResourceIntTest {
 
     @Test
     @Transactional
+    public void createDistrictDupCode() throws Exception{
+        districtRepository.saveAndFlush(district);
+
+        District district1 = new District();
+        district1.setName(DEFAULT_NAME);
+        district1.setCode(DEFAULT_CODE);
+        district1.setCity(city);
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(district1)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Transactional
     public void checkNameIsRequired() throws Exception {
         int databaseSizeBeforeTest = districtRepository.findAll().size();
         // set the field null
@@ -245,6 +261,31 @@ public class DistrictResourceIntTest {
         assertThat(testDistrict.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testDistrict.getCode()).isEqualTo(UPDATED_CODE);
         assertThat(testDistrict.getCity()).isEqualTo(city);
+    }
+
+    @Test
+    @Transactional
+    public void updateDistrictWithDupCode() throws Exception{
+        // Initialize the database
+        districtRepository.save(district);
+
+        District district1 = new District();
+        district1.setName(DEFAULT_NAME);
+        district1.setCode("hc");
+        district1.setCity(city);
+        districtRepository.save(district1);
+
+        // Update the district
+        district = new District();
+        district.setCity(city);
+        district.setCode("hc");
+        district.setName(DEFAULT_NAME);
+        district.setId(1L);
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(district)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
