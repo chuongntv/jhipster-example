@@ -4,6 +4,7 @@ import com.jhipster.sample.Application;
 import com.jhipster.sample.domain.Country;
 import com.jhipster.sample.repository.CountryRepository;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,10 +84,10 @@ public class CountryResourceIntTest {
 
         // Create the Country
 
-        restCountryMockMvc.perform(post("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(country)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
 
         // Validate the Country in the database
         List<Country> countrys = countryRepository.findAll();
@@ -105,7 +106,7 @@ public class CountryResourceIntTest {
 
         // Create the Country, which fails.
 
-        restCountryMockMvc.perform(post("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(country)))
                 .andExpect(status().isBadRequest());
@@ -123,7 +124,7 @@ public class CountryResourceIntTest {
 
         // Create the Country, which fails.
 
-        restCountryMockMvc.perform(post("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(country)))
                 .andExpect(status().isBadRequest());
@@ -139,12 +140,12 @@ public class CountryResourceIntTest {
         countryRepository.saveAndFlush(country);
 
         // Get all the countrys
-        restCountryMockMvc.perform(get("/api/countries?sort=id,desc"))
+        restCountryMockMvc.perform(get("/api/country/fetch"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[*].id").value(hasItem(country.getId().intValue())))
-                .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
-                .andExpect(jsonPath("$.[*].code").value(hasItem(DEFAULT_CODE.toString())));
+                .andExpect(jsonPath("$.[*][0].id").value(hasItem(country.getId().intValue())))
+                .andExpect(jsonPath("$.[*][0].name").value(hasItem(DEFAULT_NAME.toString())))
+                .andExpect(jsonPath("$.[*][0].code").value(hasItem(DEFAULT_CODE.toString())));
     }
 
     @Test
@@ -154,7 +155,7 @@ public class CountryResourceIntTest {
         countryRepository.saveAndFlush(country);
 
         // Get the country
-        restCountryMockMvc.perform(get("/api/countries/{id}", country.getId()))
+        restCountryMockMvc.perform(get("/api/country/fetch/{id}", country.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(country.getId().intValue()))
@@ -166,8 +167,8 @@ public class CountryResourceIntTest {
     @Transactional
     public void getNonExistingCountry() throws Exception {
         // Get the country
-        restCountryMockMvc.perform(get("/api/countries/{id}", Long.MAX_VALUE))
-                .andExpect(status().isNotFound());
+        restCountryMockMvc.perform(get("/api/country/fetch/{id}", Long.MAX_VALUE))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -182,7 +183,7 @@ public class CountryResourceIntTest {
         country.setName(UPDATED_NAME);
         country.setCode(UPDATED_CODE);
 
-        restCountryMockMvc.perform(put("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(country)))
                 .andExpect(status().isOk());
@@ -204,7 +205,7 @@ public class CountryResourceIntTest {
         // Update the country
         country.setName(null);
 
-        restCountryMockMvc.perform(put("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(country)))
             .andExpect(status().isBadRequest());
@@ -219,7 +220,7 @@ public class CountryResourceIntTest {
         // Update the country
         country.setCode(null);
 
-        restCountryMockMvc.perform(put("/api/countries")
+        restCountryMockMvc.perform(post("/api/country/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(country)))
             .andExpect(status().isBadRequest());
@@ -234,7 +235,7 @@ public class CountryResourceIntTest {
 		int databaseSizeBeforeDelete = countryRepository.findAll().size();
 
         // Get the country
-        restCountryMockMvc.perform(delete("/api/countries/{id}", country.getId())
+        restCountryMockMvc.perform(delete("/api/country/delete/{id}", country.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
 
@@ -250,7 +251,7 @@ public class CountryResourceIntTest {
         countryRepository.saveAndFlush(country);
 
         // Get the country
-        restCountryMockMvc.perform(delete("/api/countries/{id}", -1)
+        restCountryMockMvc.perform(delete("/api/country/delete/{id}", -1)
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isBadRequest());
     }
