@@ -101,10 +101,10 @@ public class CityResourceIntTest {
 
         // Create the City
 
-        restCityMockMvc.perform(post("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isOk());
 
         // Validate the City in the database
         List<City> citys = cityRepository.findAll();
@@ -124,7 +124,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -142,7 +142,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -160,7 +160,7 @@ public class CityResourceIntTest {
 
         // Create the City, which fails.
 
-        restCityMockMvc.perform(post("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -176,15 +176,15 @@ public class CityResourceIntTest {
         cityRepository.saveAndFlush(city);
 
         // Get all the citys
-        restCityMockMvc.perform(get("/api/cities?sort=id,desc"))
+        restCityMockMvc.perform(get("/api/city/fetch"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(city.getId().intValue())))
-            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
-            .andExpect(jsonPath("$.[*].code").value(hasItem(DEFAULT_CODE.toString())))
-            .andExpect(jsonPath("$.[*].country.id").value(hasItem(country.getId().intValue())))
-            .andExpect(jsonPath("$.[*].country.name").value(hasItem(COUNTRY_NAME)))
-            .andExpect(jsonPath("$.[*].country.code").value(hasItem(COUNTRY_CODE)));
+            .andExpect(jsonPath("$.[*][0].id").value(hasItem(city.getId().intValue())))
+            .andExpect(jsonPath("$.[*][0].name").value(hasItem(DEFAULT_NAME.toString())))
+            .andExpect(jsonPath("$.[*][0].code").value(hasItem(DEFAULT_CODE.toString())))
+            .andExpect(jsonPath("$.[*][0].country.id").value(hasItem(country.getId().intValue())))
+            .andExpect(jsonPath("$.[*][0].country.name").value(hasItem(COUNTRY_NAME)))
+            .andExpect(jsonPath("$.[*][0].country.code").value(hasItem(COUNTRY_CODE)));
     }
 
     @Test
@@ -194,7 +194,7 @@ public class CityResourceIntTest {
         cityRepository.saveAndFlush(city);
 
         // Get the city
-        restCityMockMvc.perform(get("/api/cities/{id}", city.getId()))
+        restCityMockMvc.perform(get("/api/city/fetch/{id}", city.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(city.getId().intValue()))
@@ -209,8 +209,8 @@ public class CityResourceIntTest {
     @Transactional
     public void getNonExistingCity() throws Exception {
         // Get the city
-        restCityMockMvc.perform(get("/api/cities/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+        restCityMockMvc.perform(get("/api/city/fetch/{id}", Long.MAX_VALUE))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -232,7 +232,7 @@ public class CityResourceIntTest {
         city.setCode(UPDATED_CODE);
         city.setCountry(country1);
 
-        restCityMockMvc.perform(put("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isOk());
@@ -255,11 +255,9 @@ public class CityResourceIntTest {
         int databaseSizeBeforeUpdate = cityRepository.findAll().size();
 
         // Update the city
-        city.setName(UPDATED_NAME);
-        city.setCode(UPDATED_CODE);
         city.setCountry(null);
 
-        restCityMockMvc.perform(put("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -274,7 +272,7 @@ public class CityResourceIntTest {
         // Update the city
         city.setName(null);
 
-        restCityMockMvc.perform(put("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -289,7 +287,7 @@ public class CityResourceIntTest {
         // Update the city
         city.setCode(null);
 
-        restCityMockMvc.perform(put("/api/cities")
+        restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(city)))
             .andExpect(status().isBadRequest());
@@ -304,7 +302,7 @@ public class CityResourceIntTest {
         int databaseSizeBeforeDelete = cityRepository.findAll().size();
 
         // Get the city
-        restCityMockMvc.perform(delete("/api/cities/{id}", city.getId())
+        restCityMockMvc.perform(delete("/api/city/delete/{id}", city.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isOk());
 
