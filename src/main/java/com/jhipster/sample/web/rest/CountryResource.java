@@ -3,6 +3,8 @@ package com.jhipster.sample.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.jhipster.sample.domain.Country;
 import com.jhipster.sample.repository.CountryRepository;
+import com.jhipster.sample.web.rest.dto.CountryDTO;
+import com.jhipster.sample.web.rest.dto.DataList;
 import com.jhipster.sample.web.rest.util.HeaderUtil;
 import com.jhipster.sample.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -19,6 +21,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +29,7 @@ import java.util.Optional;
  * REST controller for managing Country.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/country")
 public class CountryResource {
 
     private final Logger log = LoggerFactory.getLogger(CountryResource.class);
@@ -73,16 +76,21 @@ public class CountryResource {
     /**
      * GET  /countries -> get all the countries.
      */
-    @RequestMapping(value = "/countries",
+    @RequestMapping(value = "/fetch",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<List<Country>> getAllCountrys(Pageable pageable)
+    public ResponseEntity<?> getAllCountrys(Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Countries");
         Page<Country> page = countryRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/countries");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        List<Country> lstCountries=  page.getContent();
+        List<CountryDTO> lstCountriesDTO = new ArrayList<>();
+        for (Country country: lstCountries) {
+            lstCountriesDTO.add(new CountryDTO(country.getId(),country.getName(),country.getCode()));
+        }
+        return new ResponseEntity<>(new DataList(lstCountriesDTO), headers, HttpStatus.OK);
     }
 
     /**

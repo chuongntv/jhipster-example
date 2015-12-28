@@ -2,7 +2,7 @@
 
 angular.module('jHipsterSampleApp')
     .factory('City', function ($resource, DateUtils) {
-        return $resource('api/citys/:id', {}, {
+        return $resource('api/cities/:id', {}, {
             'query': { method: 'GET', isArray: true},
             'get': {
                 method: 'GET',
