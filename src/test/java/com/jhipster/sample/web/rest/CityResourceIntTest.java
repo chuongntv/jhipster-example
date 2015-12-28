@@ -3,6 +3,7 @@ package com.jhipster.sample.web.rest;
 import com.jhipster.sample.Application;
 import com.jhipster.sample.domain.City;
 import com.jhipster.sample.domain.Country;
+import com.jhipster.sample.domain.District;
 import com.jhipster.sample.repository.CityRepository;
 
 import com.jhipster.sample.repository.CountryRepository;
@@ -119,6 +120,22 @@ public class CityResourceIntTest {
         assertThat(testCity.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testCity.getCode()).isEqualTo(DEFAULT_CODE);
         assertThat(testCity.getCountry()).isEqualTo(country);
+    }
+
+    @Test
+    @Transactional
+    public void createCityDupCode() throws Exception{
+        cityRepository.saveAndFlush(city);
+
+        City city1 = new City();
+        city1.setName(DEFAULT_NAME);
+        city1.setCode(DEFAULT_CODE);
+        city1.setCountry(country);
+
+        restCityMockMvc.perform(post("/api/city/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(city1)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -244,6 +261,27 @@ public class CityResourceIntTest {
         assertThat(testCity.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testCity.getCode()).isEqualTo(UPDATED_CODE);
         assertThat(testCity.getCountry().toString()).isEqualTo(country1.toString());
+    }
+
+    @Test
+    @Transactional
+    public void updateCityWithDupCode() throws Exception{
+        // Initialize the database
+        cityRepository.save(city);
+
+        City city1 = new City();
+        city1.setName(DEFAULT_NAME);
+        city1.setCode("dn");
+        city1.setCountry(country);
+        cityRepository.save(city1);
+
+        // Update the district
+        city.setCode("dn");
+
+        restCityMockMvc.perform(post("/api/city/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(city)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test

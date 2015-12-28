@@ -6,6 +6,7 @@ import com.jhipster.sample.repository.CityRepository;
 import com.jhipster.sample.repository.CountryRepository;
 
 import com.jhipster.sample.repository.DistrictRepository;
+import com.jhipster.sample.web.rest.dto.CountryDTO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.io.Console;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +107,21 @@ public class CountryResourceIntTest {
         Country testCountry = countrys.get(countrys.size() - 1);
         assertThat(testCountry.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testCountry.getCode()).isEqualTo(DEFAULT_CODE);
+    }
+
+    @Test
+    @Transactional
+    public void createCountryDupCode() throws Exception{
+        countryRepository.saveAndFlush(country);
+
+        Country country1 = new Country();
+        country1.setName(DEFAULT_NAME);
+        country1.setCode(DEFAULT_CODE);
+
+        restCountryMockMvc.perform(post("/api/country/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(country1)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -204,6 +221,24 @@ public class CountryResourceIntTest {
         Country testCountry = countrys.get(countrys.size() - 1);
         assertThat(testCountry.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testCountry.getCode()).isEqualTo(UPDATED_CODE);
+    }
+
+    @Test
+    @Transactional
+    public void updateCountryWithDupCode() throws Exception{
+        countryRepository.saveAndFlush(country);
+
+        Country country1 = new Country();
+        country1.setName(DEFAULT_NAME);
+        country1.setCode("vi");
+        countryRepository.save(country1);
+
+        country.setCode("vi");
+
+        restCountryMockMvc.perform(post("/api/country/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(country)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
