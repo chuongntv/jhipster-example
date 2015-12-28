@@ -6,6 +6,7 @@ import com.jhipster.sample.domain.Country;
 import com.jhipster.sample.repository.CityRepository;
 
 import com.jhipster.sample.repository.CountryRepository;
+import com.jhipster.sample.repository.DistrictRepository;
 import io.gatling.recorder.util.Json;
 import org.boon.Str;
 import org.junit.Before;
@@ -60,6 +61,9 @@ public class CityResourceIntTest {
     private CountryRepository countryRepository;
 
     @Inject
+    private DistrictRepository districtRepository;
+
+    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -76,6 +80,8 @@ public class CityResourceIntTest {
         MockitoAnnotations.initMocks(this);
         CityResource cityResource = new CityResource();
         ReflectionTestUtils.setField(cityResource, "cityRepository", cityRepository);
+        ReflectionTestUtils.setField(cityResource, "countryRepository", countryRepository);
+        ReflectionTestUtils.setField(cityResource, "districtRepository", districtRepository);
         this.restCityMockMvc = MockMvcBuilders.standaloneSetup(cityResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -173,25 +179,22 @@ public class CityResourceIntTest {
     @Transactional
     public void getAllCitys() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         // Get all the citys
-        restCityMockMvc.perform(get("/api/city/fetch"))
+        restCityMockMvc.perform(get("/api/city/fetch/country/{id}", country.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.[*][0].id").value(hasItem(city.getId().intValue())))
             .andExpect(jsonPath("$.[*][0].name").value(hasItem(DEFAULT_NAME.toString())))
-            .andExpect(jsonPath("$.[*][0].code").value(hasItem(DEFAULT_CODE.toString())))
-            .andExpect(jsonPath("$.[*][0].country.id").value(hasItem(country.getId().intValue())))
-            .andExpect(jsonPath("$.[*][0].country.name").value(hasItem(COUNTRY_NAME)))
-            .andExpect(jsonPath("$.[*][0].country.code").value(hasItem(COUNTRY_CODE)));
+            .andExpect(jsonPath("$.[*][0].code").value(hasItem(DEFAULT_CODE.toString())));
     }
 
     @Test
     @Transactional
     public void getCity() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         // Get the city
         restCityMockMvc.perform(get("/api/city/fetch/{id}", city.getId()))
@@ -199,10 +202,7 @@ public class CityResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(city.getId().intValue()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
-            .andExpect(jsonPath("$.code").value(DEFAULT_CODE))
-            .andExpect(jsonPath("$.country.id").value(country.getId().intValue()))
-            .andExpect(jsonPath("$.country.name").value(COUNTRY_NAME))
-            .andExpect(jsonPath("$.country.code").value(COUNTRY_CODE));
+            .andExpect(jsonPath("$.code").value(DEFAULT_CODE));
     }
 
     @Test
@@ -223,7 +223,7 @@ public class CityResourceIntTest {
         countryRepository.save(country1);
 
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         int databaseSizeBeforeUpdate = cityRepository.findAll().size();
 
@@ -250,9 +250,7 @@ public class CityResourceIntTest {
     @Transactional
     public void updateCityWithNullCountry() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
-
-        int databaseSizeBeforeUpdate = cityRepository.findAll().size();
+        cityRepository.save(city);
 
         // Update the city
         city.setCountry(null);
@@ -267,7 +265,7 @@ public class CityResourceIntTest {
     @Transactional
     public void updateCityWithNullName() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         // Update the city
         city.setName(null);
@@ -282,7 +280,7 @@ public class CityResourceIntTest {
     @Transactional
     public void updateCityWithNullCode() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         // Update the city
         city.setCode(null);
@@ -297,7 +295,7 @@ public class CityResourceIntTest {
     @Transactional
     public void deleteCity() throws Exception {
         // Initialize the database
-        cityRepository.saveAndFlush(city);
+        cityRepository.save(city);
 
         int databaseSizeBeforeDelete = cityRepository.findAll().size();
 
@@ -307,18 +305,14 @@ public class CityResourceIntTest {
             .andExpect(status().isOk());
 
         // Validate the database is empty
-        List<City> citys = cityRepository.findAll();
-        assertThat(citys).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(cityRepository.findOne(city.getId())).isEqualTo(null);
     }
 
     @Test
     @Transactional
     public void deleteCityWithInvalidId() throws Exception {
-        // Initialize the database
-        cityRepository.saveAndFlush(city);
-
         // Get the city
-        restCityMockMvc.perform(delete("/api/cities/{id}", -1)
+        restCityMockMvc.perform(delete("/api/city/delete/{id}", -1)
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isBadRequest());
     }
