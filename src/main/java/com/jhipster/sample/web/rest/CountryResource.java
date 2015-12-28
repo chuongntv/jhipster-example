@@ -6,12 +6,10 @@ import com.jhipster.sample.repository.CountryRepository;
 import com.jhipster.sample.web.rest.dto.CountryDTO;
 import com.jhipster.sample.web.rest.dto.DataList;
 import com.jhipster.sample.web.rest.util.HeaderUtil;
-import com.jhipster.sample.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +37,7 @@ public class CountryResource {
     /**
      * POST  /countries -> Create a new country.
      */
-    @RequestMapping(value = "/countries",
+  /*  @RequestMapping(value = "/countries",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -53,24 +50,21 @@ public class CountryResource {
         return ResponseEntity.created(new URI("/api/countries/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("country", result.getId().toString()))
             .body(result);
-    }
+    }*/
 
     /**
      * PUT  /countrys -> Updates an existing country.
      */
-    @RequestMapping(value = "/countries",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/save",
+        method = RequestMethod.POST)
     @Timed
-    public ResponseEntity<Country> updateCountry(@Valid @RequestBody Country country) throws URISyntaxException {
+    public ResponseEntity<Country> saveCountry(@Valid @RequestBody Country country) throws URISyntaxException {
         log.debug("REST request to update Country : {}", country);
         if (country.getId() == null) {
-            return createCountry(country);
+            //return createCountry(country);OK
         }
         Country result = countryRepository.save(country);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("country", country.getId().toString()))
-            .body(result);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     /**
@@ -80,23 +74,21 @@ public class CountryResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<?> getAllCountrys(Pageable pageable)
+    public ResponseEntity<?> getAllCountries(Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Countries");
         Page<Country> page = countryRepository.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/countries");
-        List<Country> lstCountries=  page.getContent();
-        List<CountryDTO> lstCountriesDTO = new ArrayList<>();
-        for (Country country: lstCountries) {
-            lstCountriesDTO.add(new CountryDTO(country.getId(),country.getName(),country.getCode()));
+        List<CountryDTO> lstCountries = new ArrayList<>();
+        for (Country country: page.getContent()) {
+            lstCountries.add(new CountryDTO(country.getId(),country.getName(),country.getCode()));
         }
-        return new ResponseEntity<>(new DataList(lstCountriesDTO), headers, HttpStatus.OK);
+        return new ResponseEntity<>(new DataList(lstCountries), HttpStatus.OK);
     }
 
     /**
-     * GET  /countries/:id -> get the "id" country.
+     * GET  /fetch/:id -> get the "id" country.
      */
-    @RequestMapping(value = "/countries/{id}",
+    @RequestMapping(value = "/fetch/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
@@ -111,9 +103,9 @@ public class CountryResource {
     }
 
     /**
-     * DELETE  /countries/:id -> delete the "id" country.
+     * DELETE  /delete/:id -> delete the "id" country.
      */
-    @RequestMapping(value = "/countries/{id}",
+    @RequestMapping(value = "/delete/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
