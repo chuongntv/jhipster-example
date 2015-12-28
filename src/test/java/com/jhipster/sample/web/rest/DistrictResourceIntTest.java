@@ -1,7 +1,11 @@
 package com.jhipster.sample.web.rest;
 
 import com.jhipster.sample.Application;
+import com.jhipster.sample.domain.City;
+import com.jhipster.sample.domain.Country;
 import com.jhipster.sample.domain.District;
+import com.jhipster.sample.repository.CityRepository;
+import com.jhipster.sample.repository.CountryRepository;
 import com.jhipster.sample.repository.DistrictRepository;
 
 import org.junit.Before;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,9 +50,19 @@ public class DistrictResourceIntTest {
     private static final String UPDATED_NAME = "BBBBB";
     private static final String DEFAULT_CODE = "AAAAA";
     private static final String UPDATED_CODE = "BBBBB";
+    private static final String COUNTRY_NAME = "AAAA";
+    private static final String COUNTRY_CODE = "BBBB";
+    private static final String CITY_NAME = "AAAA";
+    private static final String CITY_CODE = "BBBB";
 
     @Inject
     private DistrictRepository districtRepository;
+
+    @Inject
+    private CityRepository cityRepository;
+
+    @Inject
+    private CountryRepository countryRepository;
 
     @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -59,11 +74,16 @@ public class DistrictResourceIntTest {
 
     private District district;
 
+    private City city;
+
+    private Country country;
+
     @PostConstruct
     public void setup() {
         MockitoAnnotations.initMocks(this);
         DistrictResource districtResource = new DistrictResource();
         ReflectionTestUtils.setField(districtResource, "districtRepository", districtRepository);
+        ReflectionTestUtils.setField(districtResource, "cityRepository", cityRepository);
         this.restDistrictMockMvc = MockMvcBuilders.standaloneSetup(districtResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -71,9 +91,21 @@ public class DistrictResourceIntTest {
 
     @Before
     public void initTest() {
+        country = new Country();
+        country.setName(COUNTRY_NAME);
+        country.setCode(COUNTRY_CODE);
+        countryRepository.saveAndFlush(country);
+
+        city = new City();
+        city.setName(CITY_NAME);
+        city.setCode(CITY_CODE);
+        city.setCountry(country);
+        cityRepository.save(city);
+
         district = new District();
         district.setName(DEFAULT_NAME);
         district.setCode(DEFAULT_CODE);
+        district.setCity(city);
     }
 
     @Test
@@ -83,10 +115,10 @@ public class DistrictResourceIntTest {
 
         // Create the District
 
-        restDistrictMockMvc.perform(post("/api/districts")
+        restDistrictMockMvc.perform(post("/api/district/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(district)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
 
         // Validate the District in the database
         List<District> districts = districtRepository.findAll();
@@ -94,6 +126,7 @@ public class DistrictResourceIntTest {
         District testDistrict = districts.get(districts.size() - 1);
         assertThat(testDistrict.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testDistrict.getCode()).isEqualTo(DEFAULT_CODE);
+        assertThat(testDistrict.getCity()).isEqualTo(city);
     }
 
     @Test
@@ -105,7 +138,7 @@ public class DistrictResourceIntTest {
 
         // Create the District, which fails.
 
-        restDistrictMockMvc.perform(post("/api/districts")
+        restDistrictMockMvc.perform(post("/api/district/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(district)))
                 .andExpect(status().isBadRequest());
@@ -123,7 +156,7 @@ public class DistrictResourceIntTest {
 
         // Create the District, which fails.
 
-        restDistrictMockMvc.perform(post("/api/districts")
+        restDistrictMockMvc.perform(post("/api/district/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(district)))
                 .andExpect(status().isBadRequest());
@@ -134,27 +167,45 @@ public class DistrictResourceIntTest {
 
     @Test
     @Transactional
+    public void checkCityIsRequired() throws Exception {
+        int databaseSizeBeforeTest = districtRepository.findAll().size();
+        // set the field null
+        district.setCity(null);
+
+        // Create the District, which fails.
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(district)))
+            .andExpect(status().isBadRequest());
+
+        List<District> districts = districtRepository.findAll();
+        assertThat(districts).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
     public void getAllDistricts() throws Exception {
         // Initialize the database
-        districtRepository.saveAndFlush(district);
+        districtRepository.save(district);
 
         // Get all the districts
-        restDistrictMockMvc.perform(get("/api/districts?sort=id,desc"))
+        restDistrictMockMvc.perform(get("/api/district/fetch/city/{id}", city.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[*].id").value(hasItem(district.getId().intValue())))
-                .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
-                .andExpect(jsonPath("$.[*].code").value(hasItem(DEFAULT_CODE.toString())));
+                .andExpect(jsonPath("$.[*][0].id").value(hasItem(district.getId().intValue())))
+                .andExpect(jsonPath("$.[*][0].name").value(hasItem(DEFAULT_NAME.toString())))
+                .andExpect(jsonPath("$.[*][0].code").value(hasItem(DEFAULT_CODE.toString())));
     }
 
     @Test
     @Transactional
     public void getDistrict() throws Exception {
         // Initialize the database
-        districtRepository.saveAndFlush(district);
+        districtRepository.save(district);
 
         // Get the district
-        restDistrictMockMvc.perform(get("/api/districts/{id}", district.getId()))
+        restDistrictMockMvc.perform(get("/api/district/fetch/{id}", district.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(district.getId().intValue()))
@@ -166,15 +217,15 @@ public class DistrictResourceIntTest {
     @Transactional
     public void getNonExistingDistrict() throws Exception {
         // Get the district
-        restDistrictMockMvc.perform(get("/api/districts/{id}", Long.MAX_VALUE))
-                .andExpect(status().isNotFound());
+        restDistrictMockMvc.perform(get("/api/district/fetch/{id}", Long.MAX_VALUE))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @Transactional
     public void updateDistrict() throws Exception {
         // Initialize the database
-        districtRepository.saveAndFlush(district);
+        districtRepository.save(district);
 
 		int databaseSizeBeforeUpdate = districtRepository.findAll().size();
 
@@ -182,7 +233,7 @@ public class DistrictResourceIntTest {
         district.setName(UPDATED_NAME);
         district.setCode(UPDATED_CODE);
 
-        restDistrictMockMvc.perform(put("/api/districts")
+        restDistrictMockMvc.perform(post("/api/district/save")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(district)))
                 .andExpect(status().isOk());
@@ -193,23 +244,75 @@ public class DistrictResourceIntTest {
         District testDistrict = districts.get(districts.size() - 1);
         assertThat(testDistrict.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testDistrict.getCode()).isEqualTo(UPDATED_CODE);
+        assertThat(testDistrict.getCity()).isEqualTo(city);
+    }
+
+    @Test
+    @Transactional
+    public void updateDistrictWithNullName() throws Exception {
+        // Initialize the database
+        districtRepository.save(district);
+
+        // Update the district
+        district.setName(null);
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(city)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Transactional
+    public void updateDistrictWithNullCode() throws Exception {
+        // Initialize the database
+        districtRepository.save(district);
+
+        // Update the district
+        district.setCode(null);
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(city)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Transactional
+    public void updateDistrictWithNullCity() throws Exception {
+        // Initialize the database
+        districtRepository.save(district);
+
+        // Update the district
+        district.setCity(null);
+
+        restDistrictMockMvc.perform(post("/api/district/save")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(city)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
     @Transactional
     public void deleteDistrict() throws Exception {
         // Initialize the database
-        districtRepository.saveAndFlush(district);
-
-		int databaseSizeBeforeDelete = districtRepository.findAll().size();
+        districtRepository.save(district);
 
         // Get the district
-        restDistrictMockMvc.perform(delete("/api/districts/{id}", district.getId())
+        restDistrictMockMvc.perform(delete("/api/district/delete/{id}", district.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
 
         // Validate the database is empty
-        List<District> districts = districtRepository.findAll();
-        assertThat(districts).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(districtRepository.findOne(district.getId())).isEqualTo(null);
+    }
+
+    @Test
+    @Transactional
+    public void deleteDistrictWithInvalidId() throws Exception {
+        // Delete the district
+        restDistrictMockMvc.perform(delete("/api/district/delete/{id}", -1)
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest());
     }
 }
