@@ -23,7 +23,7 @@ spring:
         url: jdbc:mysql://localhost:3306/area
         name:
         username: root
-        password:  abc123@@
+        password:  1qaz@WSX123
     jpa:
         database-platform: org.hibernate.dialect.MySQLInnoDBDialect
         database: MYSQL
