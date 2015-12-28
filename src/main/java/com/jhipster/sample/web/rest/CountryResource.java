@@ -74,7 +74,7 @@ public class CountryResource {
         if (country.getId() != null) {
             tmpCountry = countryRepository.findOne(country.getId());
             if(tmpCountry==null) {
-                return new ResponseEntity(HttpStatus.BAD_GATEWAY);
+                return new ResponseEntity(HttpStatus.BAD_REQUEST);
             }
         }
         tmpCountry = countryRepository.findByCode(country.getCode());
