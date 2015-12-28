@@ -275,8 +275,12 @@ public class CityResourceIntTest {
         city1.setCountry(country);
         cityRepository.save(city1);
 
-        // Update the district
+        // Update the city
+        city = new City();
+        city.setName(DEFAULT_NAME);
         city.setCode("dn");
+        city.setId(1L);
+        city.setCountry(country);
 
         restCityMockMvc.perform(post("/api/city/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)

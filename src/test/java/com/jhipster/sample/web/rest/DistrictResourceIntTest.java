@@ -271,12 +271,16 @@ public class DistrictResourceIntTest {
 
         District district1 = new District();
         district1.setName(DEFAULT_NAME);
-        district1.setCode("vi");
+        district1.setCode("hc");
         district1.setCity(city);
         districtRepository.save(district1);
 
         // Update the district
-        district.setCode("vi");
+        district = new District();
+        district.setCity(city);
+        district.setCode("hc");
+        district.setName(DEFAULT_NAME);
+        district.setId(1L);
 
         restDistrictMockMvc.perform(post("/api/district/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)

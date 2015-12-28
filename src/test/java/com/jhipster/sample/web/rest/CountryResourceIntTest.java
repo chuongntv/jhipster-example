@@ -233,7 +233,10 @@ public class CountryResourceIntTest {
         country1.setCode("vi");
         countryRepository.save(country1);
 
+        country = new Country();
+        country.setName(DEFAULT_NAME);
         country.setCode("vi");
+        country.setId(1L);
 
         restCountryMockMvc.perform(post("/api/country/save")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
