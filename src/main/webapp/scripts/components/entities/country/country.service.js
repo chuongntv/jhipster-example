@@ -2,7 +2,7 @@
 
 angular.module('jHipsterSampleApp')
     .factory('Country', function ($resource, DateUtils) {
-        return $resource('api/countries/:id', {}, {
+        return $resource('api/country/:id', {}, {
             'query': { method: 'GET', isArray: true},
             'get': {
                 method: 'GET',
@@ -11,6 +11,6 @@ angular.module('jHipsterSampleApp')
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'update': { method:'POST' }
         });
     });
