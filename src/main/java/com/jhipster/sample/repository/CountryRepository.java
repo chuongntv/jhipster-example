@@ -10,5 +10,5 @@ import java.util.List;
  * Spring Data JPA repository for the Country entity.
  */
 public interface CountryRepository extends JpaRepository<Country,Long> {
-
+    public Country findByCode(String code);
 }

@@ -1,8 +1,12 @@
 package com.jhipster.sample.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.jhipster.sample.domain.City;
 import com.jhipster.sample.domain.Country;
+import com.jhipster.sample.domain.District;
+import com.jhipster.sample.repository.CityRepository;
 import com.jhipster.sample.repository.CountryRepository;
+import com.jhipster.sample.repository.DistrictRepository;
 import com.jhipster.sample.web.rest.dto.CountryDTO;
 import com.jhipster.sample.web.rest.dto.DataList;
 import com.jhipster.sample.web.rest.util.HeaderUtil;
@@ -10,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.Repository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +39,11 @@ public class CountryResource {
     @Inject
     private CountryRepository countryRepository;
 
+    @Inject
+    private CityRepository cityRepository;
+
+    @Inject
+    private DistrictRepository districtRepository;
     /**
      * POST  /countries -> Create a new country.
      */
@@ -58,12 +68,20 @@ public class CountryResource {
     @RequestMapping(value = "/save",
         method = RequestMethod.POST)
     @Timed
-    public ResponseEntity<Country> saveCountry(@Valid @RequestBody Country country) throws URISyntaxException {
+    public ResponseEntity<?> saveCountry(@Valid @RequestBody Country country) throws URISyntaxException {
         log.debug("REST request to update Country : {}", country);
-        if (country.getId() == null) {
-            //return createCountry(country);OK
+        Country tmpCountry;
+        if (country.getId() != null) {
+            tmpCountry = countryRepository.findOne(country.getId());
+            if(tmpCountry==null) {
+                return new ResponseEntity(HttpStatus.BAD_GATEWAY);
+            }
         }
-        Country result = countryRepository.save(country);
+        tmpCountry = countryRepository.findByCode(country.getCode());
+        if(tmpCountry!=null && tmpCountry.getId() !=country.getId()){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        countryRepository.save(country);
         return new ResponseEntity(HttpStatus.OK);
     }
 
@@ -92,14 +110,12 @@ public class CountryResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Country> getCountry(@PathVariable Long id) {
+    public ResponseEntity<?> getCountry(@PathVariable Long id) {
         log.debug("REST request to get Country : {}", id);
         Country country = countryRepository.findOne(id);
-        return Optional.ofNullable(country)
-            .map(result -> new ResponseEntity<>(
-                result,
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        if(country==null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(country,HttpStatus.OK);
     }
 
     /**
@@ -109,9 +125,21 @@ public class CountryResource {
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteCountry(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCountry(@PathVariable Long id) {
         log.debug("REST request to delete Country : {}", id);
+        Country country = countryRepository.findOne(id);
+        if(country==null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        List<City> lstCities = cityRepository.findByCountry(country);
+        for (City city: lstCities) {
+            List<District> lstDistricts = districtRepository.findByCity(city);
+            for(District district: lstDistricts){
+                districtRepository.delete(district);
+            }
+            cityRepository.delete(city);
+        }
         countryRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("country", id.toString())).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
