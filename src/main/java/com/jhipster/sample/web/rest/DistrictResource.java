@@ -105,9 +105,9 @@ public class DistrictResource {
     public ResponseEntity<?> getDistrict(@PathVariable Long id) {
         log.debug("REST request to get District : {}", id);
         District district = districtRepository.findOne(id);
-        district.setCity(null);
         if(district == null)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        district.setCity(null);
         return new ResponseEntity<>(district,HttpStatus.OK);
     }
 
