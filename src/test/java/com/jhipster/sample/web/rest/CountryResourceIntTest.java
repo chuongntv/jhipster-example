@@ -2,8 +2,10 @@ package com.jhipster.sample.web.rest;
 
 import com.jhipster.sample.Application;
 import com.jhipster.sample.domain.Country;
+import com.jhipster.sample.repository.CityRepository;
 import com.jhipster.sample.repository.CountryRepository;
 
+import com.jhipster.sample.repository.DistrictRepository;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -231,17 +233,12 @@ public class CountryResourceIntTest {
     public void deleteCountry() throws Exception {
         // Initialize the database
         countryRepository.saveAndFlush(country);
-
-		int databaseSizeBeforeDelete = countryRepository.findAll().size();
-
         // Get the country
         restCountryMockMvc.perform(delete("/api/country/delete/{id}", country.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
 
-        // Validate the database is empty
-        List<Country> countrys = countryRepository.findAll();
-        assertThat(countrys).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(country.getId()).isEqualTo(null);
     }
 
     @Test
