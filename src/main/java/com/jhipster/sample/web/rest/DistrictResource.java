@@ -114,7 +114,7 @@ public class DistrictResource {
     /**
      * DELETE  /districts/:id -> delete the "id" district.
      */
-    @RequestMapping(value = "/districts/{id}",
+    @RequestMapping(value = "/delete/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
