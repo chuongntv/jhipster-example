@@ -26,7 +26,7 @@ angular.module('jHipsterSampleApp').controller('CountryDialogController',
             if ($scope.country.id != null) {
                 Country.update($scope.country, onSaveSuccess, onSaveError);
             } else {
-                Country.save($scope.country, onSaveSuccess, onSaveError);
+                Country.update($scope.country, onSaveSuccess, onSaveError);
             }
         };
 
