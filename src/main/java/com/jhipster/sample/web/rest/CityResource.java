@@ -2,7 +2,13 @@ package com.jhipster.sample.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.jhipster.sample.domain.City;
+import com.jhipster.sample.domain.Country;
+import com.jhipster.sample.domain.District;
 import com.jhipster.sample.repository.CityRepository;
+import com.jhipster.sample.repository.CountryRepository;
+import com.jhipster.sample.repository.DistrictRepository;
+import com.jhipster.sample.web.rest.dto.CityDTO;
+import com.jhipster.sample.web.rest.dto.DataList;
 import com.jhipster.sample.web.rest.util.HeaderUtil;
 import com.jhipster.sample.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -19,6 +25,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,92 +33,106 @@ import java.util.Optional;
  * REST controller for managing City.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/city")
 public class CityResource {
 
     private final Logger log = LoggerFactory.getLogger(CityResource.class);
 
     @Inject
+    private CountryRepository countryRepository;
+
+    @Inject
     private CityRepository cityRepository;
 
+    @Inject
+    private DistrictRepository districtRepository;
+
     /**
-     * POST  /citys -> Create a new city.
+     * POST  /citys -> Updates an existing city.
      */
-    @RequestMapping(value = "/cities",
+    @RequestMapping(value = "/save",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<City> createCity(@Valid @RequestBody City city) throws URISyntaxException {
-        log.debug("REST request to save City : {}", city);
-        if (city.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("city", "idexists", "A new city cannot already have an ID")).body(null);
+    public ResponseEntity<?> saveCity(@Valid @RequestBody CityDTO cityDto) throws URISyntaxException {
+        log.debug("REST request to update City : {}", cityDto.getCode());
+        Country existCountry = countryRepository.findOne(cityDto.getCountry().getId());
+        if(existCountry==null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        City tmpCity;
+        if (cityDto.getId() != null) {
+            tmpCity = cityRepository.findOne(cityDto.getId());
+            if(tmpCity==null)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        City result = cityRepository.save(city);
-        return ResponseEntity.created(new URI("/api/cities/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("city", result.getId().toString()))
-            .body(result);
+        tmpCity = cityRepository.findByCode(cityDto.getCode());
+        if(tmpCity!=null && tmpCity.getId() !=cityDto.getId()){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        City city = new City();
+        city.setId(cityDto.getId());
+        city.setName(cityDto.getName());
+        city.setCode(cityDto.getCode());
+        city.setCountry(existCountry);
+        cityRepository.save(city);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
-     * PUT  /citys -> Updates an existing city.
+     * GET  /fetch -> get all the citys.
      */
-    @RequestMapping(value = "/cities",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public ResponseEntity<City> updateCity(@Valid @RequestBody City city) throws URISyntaxException {
-        log.debug("REST request to update City : {}", city);
-        if (city.getId() == null) {
-            return createCity(city);
-        }
-        City result = cityRepository.save(city);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("city", city.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * GET  /citys -> get all the citys.
-     */
-    @RequestMapping(value = "/cities",
+    @RequestMapping(value = "/fetch/country/{countryId}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<List<City>> getAllCitys(Pageable pageable)
+    public ResponseEntity<?> getAllCities(Pageable pageable, @PathVariable Long countryId)
         throws URISyntaxException {
         log.debug("REST request to get a page of Cities");
-        Page<City> page = cityRepository.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/cities");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        Country country = countryRepository.findOne(countryId);
+        if(country==null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        Page<City> page = cityRepository.findByCountry(country, pageable);
+        List<CityDTO> lstCities = new ArrayList<>();
+        for(City city: page.getContent()){
+            lstCities.add(new CityDTO(city.getId(),city.getName(),city.getCode(),null));
+        }
+        return new ResponseEntity<>(new DataList(lstCities),HttpStatus.OK);
     }
 
     /**
      * GET  /citys/:id -> get the "id" city.
      */
-    @RequestMapping(value = "/cities/{id}",
+    @RequestMapping(value = "/fetch/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<City> getCity(@PathVariable Long id) {
+    public ResponseEntity<?> getCity(@PathVariable Long id) {
         log.debug("REST request to get City : {}", id);
         City city = cityRepository.findOne(id);
-        return Optional.ofNullable(city)
-            .map(result -> new ResponseEntity<>(
-                result,
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        if(city==null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(city,HttpStatus.OK);
     }
 
     /**
      * DELETE  /cities/:id -> delete the "id" city.
      */
-    @RequestMapping(value = "/cities/{id}",
+    @RequestMapping(value = "/delete/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCity(@PathVariable Long id) {
         log.debug("REST request to delete City : {}", id);
-        cityRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("city", id.toString())).build();
+        City city = cityRepository.findOne(id);
+        if(city==null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        List<District> lstDistricts = districtRepository.findByCity(city);
+        for(District district: lstDistricts){
+            districtRepository.delete(district);
+        }
+        cityRepository.delete(city);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

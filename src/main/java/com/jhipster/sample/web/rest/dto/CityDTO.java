@@ -2,12 +2,14 @@ package com.jhipster.sample.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * Created by pm01 on 12/25/15.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CityDTO extends BaseDTO {
-
+    @NotNull
     private CountryDTO country;
     public CityDTO(){
 
