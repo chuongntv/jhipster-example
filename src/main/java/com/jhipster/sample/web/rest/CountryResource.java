@@ -68,19 +68,23 @@ public class CountryResource {
     @RequestMapping(value = "/save",
         method = RequestMethod.POST)
     @Timed
-    public ResponseEntity<?> saveCountry(@Valid @RequestBody Country country) throws URISyntaxException {
-        log.debug("REST request to update Country : {}", country);
+    public ResponseEntity<?> saveCountry(@Valid @RequestBody CountryDTO countryDto) throws URISyntaxException {
+        log.debug("REST request to update Country : {}", countryDto);
         Country tmpCountry;
-        if (country.getId() != null) {
-            tmpCountry = countryRepository.findOne(country.getId());
+        if (countryDto.getId() != null) {
+            tmpCountry = countryRepository.findOne(countryDto.getId());
             if(tmpCountry==null) {
                 return new ResponseEntity(HttpStatus.BAD_REQUEST);
             }
         }
-        tmpCountry = countryRepository.findByCode(country.getCode());
-        if(tmpCountry!=null && tmpCountry.getId() !=country.getId()){
+        tmpCountry = countryRepository.findByCode(countryDto.getCode());
+        if(tmpCountry!=null && tmpCountry.getId() !=countryDto.getId()){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+        Country country = new Country();
+        country.setId(countryDto.getId());
+        country.setName(countryDto.getName());
+        country.setCode(countryDto.getCode());
         countryRepository.save(country);
         return new ResponseEntity(HttpStatus.OK);
     }
