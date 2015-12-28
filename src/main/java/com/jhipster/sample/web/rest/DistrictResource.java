@@ -1,8 +1,12 @@
 package com.jhipster.sample.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.jhipster.sample.domain.City;
 import com.jhipster.sample.domain.District;
+import com.jhipster.sample.repository.CityRepository;
 import com.jhipster.sample.repository.DistrictRepository;
+import com.jhipster.sample.web.rest.dto.DataList;
+import com.jhipster.sample.web.rest.dto.DistrictDTO;
 import com.jhipster.sample.web.rest.util.HeaderUtil;
 import com.jhipster.sample.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -19,6 +23,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,80 +31,84 @@ import java.util.Optional;
  * REST controller for managing District.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/district")
 public class DistrictResource {
 
     private final Logger log = LoggerFactory.getLogger(DistrictResource.class);
-        
+
+    @Inject
+    private CityRepository cityRepository;
+
     @Inject
     private DistrictRepository districtRepository;
-    
+
     /**
-     * POST  /districts -> Create a new district.
+     * POST  /districts -> Updates an existing district.
      */
-    @RequestMapping(value = "/districts",
+    @RequestMapping(value = "/save",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<District> createDistrict(@Valid @RequestBody District district) throws URISyntaxException {
-        log.debug("REST request to save District : {}", district);
-        if (district.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("district", "idexists", "A new district cannot already have an ID")).body(null);
+    public ResponseEntity<District> saveDistrict(@Valid @RequestBody DistrictDTO districtDto) throws URISyntaxException {
+        log.debug("REST request to update District : {}", districtDto);
+        City existCity = cityRepository.findOne(districtDto.getCity().getId());
+        if (existCity==null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        District tmpDistrict;
+        if (districtDto.getId() != null) {
+            tmpDistrict = districtRepository.findOne(districtDto.getId());
+            if(tmpDistrict==null)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        District result = districtRepository.save(district);
-        return ResponseEntity.created(new URI("/api/districts/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("district", result.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * PUT  /districts -> Updates an existing district.
-     */
-    @RequestMapping(value = "/districts",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public ResponseEntity<District> updateDistrict(@Valid @RequestBody District district) throws URISyntaxException {
-        log.debug("REST request to update District : {}", district);
-        if (district.getId() == null) {
-            return createDistrict(district);
+        tmpDistrict = districtRepository.findByCode(districtDto.getCode());
+        if(tmpDistrict!=null && tmpDistrict.getId() !=districtDto.getId()){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        District result = districtRepository.save(district);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("district", district.getId().toString()))
-            .body(result);
+        District district = new District();
+        district.setId(districtDto.getId());
+        district.setName(districtDto.getName());
+        district.setCode(districtDto.getCode());
+        district.setCity(existCity);
+        districtRepository.save(district);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
      * GET  /districts -> get all the districts.
      */
-    @RequestMapping(value = "/districts",
+    @RequestMapping(value = "/fetch/city/{cityId}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<List<District>> getAllDistricts(Pageable pageable)
+    public ResponseEntity<?> getAllDistricts(Pageable pageable, @PathVariable Long cityId)
         throws URISyntaxException {
         log.debug("REST request to get a page of Districts");
-        Page<District> page = districtRepository.findAll(pageable); 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/districts");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        City city = cityRepository.findOne(cityId);
+        if (city==null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        Page<District> page = districtRepository.findByCity(city, pageable);
+        List<DistrictDTO> lstDistricts = new ArrayList<>();
+        for(District district: page.getContent()){
+            lstDistricts.add(new DistrictDTO(district.getId(),district.getName(),district.getCode(),null));
+        }
+        return new ResponseEntity<>(new DataList(lstDistricts),HttpStatus.OK);
     }
 
     /**
      * GET  /districts/:id -> get the "id" district.
      */
-    @RequestMapping(value = "/districts/{id}",
+    @RequestMapping(value = "/fetch/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<District> getDistrict(@PathVariable Long id) {
+    public ResponseEntity<?> getDistrict(@PathVariable Long id) {
         log.debug("REST request to get District : {}", id);
         District district = districtRepository.findOne(id);
-        return Optional.ofNullable(district)
-            .map(result -> new ResponseEntity<>(
-                result,
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        district.setCity(null);
+        if(district == null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(district,HttpStatus.OK);
     }
 
     /**
@@ -109,9 +118,12 @@ public class DistrictResource {
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteDistrict(@PathVariable Long id) {
+    public ResponseEntity<?> deleteDistrict(@PathVariable Long id) {
         log.debug("REST request to delete District : {}", id);
+        District district = districtRepository.findOne(id);
+        if(district==null)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         districtRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("district", id.toString())).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
