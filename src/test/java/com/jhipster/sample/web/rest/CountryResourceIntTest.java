@@ -53,6 +53,12 @@ public class CountryResourceIntTest {
     private CountryRepository countryRepository;
 
     @Inject
+    private CityRepository cityRepository;
+
+    @Inject
+    private DistrictRepository districtRepository;
+
+    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -67,6 +73,8 @@ public class CountryResourceIntTest {
         MockitoAnnotations.initMocks(this);
         CountryResource countryResource = new CountryResource();
         ReflectionTestUtils.setField(countryResource, "countryRepository", countryRepository);
+        ReflectionTestUtils.setField(countryResource, "cityRepository", cityRepository);
+        ReflectionTestUtils.setField(countryResource, "districtRepository", districtRepository);
         this.restCountryMockMvc = MockMvcBuilders.standaloneSetup(countryResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -238,15 +246,12 @@ public class CountryResourceIntTest {
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
 
-        assertThat(country.getId()).isEqualTo(null);
+        assertThat(countryRepository.findOne(country.getId())).isEqualTo(null);
     }
 
     @Test
     @Transactional
     public void deleteCountryWithInvalidId() throws Exception {
-        // Initialize the database
-        countryRepository.saveAndFlush(country);
-
         // Get the country
         restCountryMockMvc.perform(delete("/api/country/delete/{id}", -1)
             .accept(TestUtil.APPLICATION_JSON_UTF8))
