@@ -110,9 +110,9 @@ public class CityResource {
     public ResponseEntity<?> getCity(@PathVariable Long id) {
         log.debug("REST request to get City : {}", id);
         City city = cityRepository.findOne(id);
-        city.setCountry(null);
         if(city==null)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        city.setCountry(null);
         return new ResponseEntity<>(city,HttpStatus.OK);
     }
 
